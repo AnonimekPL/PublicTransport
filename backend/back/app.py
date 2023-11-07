@@ -134,4 +134,4 @@ def add_bus_stop():
 with app.app_context():
     db.create_all()
 if __name__ == "__main__":
-    app.run(host='192.168.1.23', port=8081, debug=True)
+    app.run(host='192.168.1.23', port=8080, debug=True)
