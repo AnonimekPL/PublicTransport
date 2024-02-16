@@ -1,35 +1,26 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  StyleSheet,
-  Button,
-} from "react-native";
-import Home from "./components/Home";
-import BusStop from "./components/BusStop";
+import { View, Text, StyleSheet, Button } from "react-native";
+// import Home from "./components/Home";
+// import BusStop from "./components/BusStop";
+import BusStopID from "./components/BusStops/BusStopID";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
+import BusLine from "./components/BusLine/BusLine";
+import BusStops from "./components/BusStops/BusStops";
 
-function HomeScreen() {
-  const navigation = useNavigation();
-  const x: number = 1;
-  return (
-    <View style={styles.container}>
-      <View style={{ backgroundColor: "#eeeeee", flex: 0.9 }}>
-        <BusStop id={3}></BusStop>
-      </View>
-      <View style={{ backgroundColor: "#bdbdbd", flex: 0.1 }}>
-        <Button
-          title="Go to Details"
-          onPress={() => navigation.navigate("Details" as never)}
-        />
-      </View>
-    </View>
-  );
-}
+export type RootStackParams = {
+  BusLine: any;
+  Shedule: any;
+  BusStops: any;
+  // Home: any;
+  Details: any;
+  BusStopID: {
+    id: number;
+  };
+};
+const RootStack = createNativeStackNavigator<RootStackParams>();
+const BusStopsStack = createNativeStackNavigator();
 
 function DetailsScreen() {
   return (
@@ -43,10 +34,15 @@ const Stack = createNativeStackNavigator();
 const YourComponent = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Details" component={DetailsScreen} />
-      </Stack.Navigator>
+      <RootStack.Navigator>
+        <RootStack.Screen name="BusLine" component={BusLine} />
+        {/* <RootStack.Screen name="Home" component={Home} /> */}
+
+        <RootStack.Screen name="BusStops" component={BusStops} />
+
+        <RootStack.Screen name="Details" component={DetailsScreen} />
+        <RootStack.Screen name="BusStopID" component={BusStopID} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 };

@@ -1,54 +1,60 @@
-import React, { useState, useEffect } from "react";
-import { Text, View } from "react-native";
-import { Card } from "react-native-paper";
+// import React, { useState, useEffect } from "react";
+// import { Text, View } from "react-native";
+// import { Card } from "react-native-paper";
+// import { RootStackParams } from "../App";
+// import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-type BusStopProps = {
-  id: number;
-};
+// type Props = NativeStackScreenProps<RootStackParams, "BusStop">;
 
-function BusStop(id: BusStopProps) {
-  console.log(id);
-  const [data, setData] = useState<item | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  type item = {
-    id: number;
-    name: string;
-    xPos: number;
-    yPos: number;
-  };
-  useEffect(() => {
-    // Wykonaj żądanie Fetch na podstawie przekazanego ID
-    fetch(`http://192.168.1.23:8080/busstop/get/${id.id}`, {
-      method: "GET",
-    })
-      .then((resp) => resp.json())
-      .then((bus_stop) => {
-        setData(bus_stop);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Błąd pobierania danych:", error);
-        setIsLoading(false);
-      });
-  }, [id]);
-  console.log(data);
-  if (isLoading) {
-    return <Text>Ładowanie...</Text>;
-  }
+// const BusStop = ({ route }: Props) => {
+//   const [data, setData] = useState<item | null>(null);
+//   const [isLoading, setIsLoading] = useState(true);
 
-  return (
-    <View>
-      {data ? (
-        <Card>
-          <Text>{data.name}</Text>
-          <Text>{data.xPos}</Text>
-          <Text>{data.yPos}</Text>
-        </Card>
-      ) : (
-        <Text>Brak danych dla ID: {id as never}</Text>
-      )}
-    </View>
-  );
-}
+//   type shedules = {
+//     arrival: string;
+//     bus_line_number: string;
+//   };
+//   type item = {
+//     bus_stop_name: string;
+//     schedules: shedules[];
+//   };
+//   useEffect(() => {
+//     // Wykonaj żądanie Fetch na podstawie przekazanego ID
+//     fetch(`http://192.168.1.23:8080/busstop/schedule/${route.params.id}`, {
+//       method: "GET",
+//     })
+//       .then((resp) => resp.json())
+//       .then((bus_stop) => {
+//         setData(bus_stop);
+//         setIsLoading(false);
+//       })
+//       .catch((error) => {
+//         console.error("Błąd pobierania danych:", error);
+//         setIsLoading(false);
+//       });
+//   }, [route]);
+//   console.log(data);
+//   if (isLoading) {
+//     return <Text>Ładowanie...</Text>;
+//   }
 
-export default BusStop;
+//   return (
+//     <View>
+//       {data ? (
+//         <Card>
+//           <Text>{data.bus_stop_name}</Text>
+//           {data.schedules.map((schedule, index) => (
+//             <View key={index}>
+//               <Text>Arrival Time: {schedule.arrival}</Text>
+//               <Text>Bus Line Number: {schedule.bus_line_number}</Text>
+//             </View>
+//           ))}
+//         </Card>
+//       ) : (
+//         <Text>Brak danych dla ID: {route.params.id}</Text>
+//       )}
+//     </View>
+//   );
+// };
+
+// export default BusStop;
