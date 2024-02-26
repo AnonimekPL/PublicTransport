@@ -1,11 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 from sqlalchemy import ForeignKey, Column, String, Integer, Time, Float, Text
 from sqlalchemy.orm import DeclarativeBase
 
-from datetime import datetime
+from datetime import time, date, datetime
 from typing import Any, List
 
 
@@ -62,7 +62,7 @@ class Schedule(db.Model):
     __tablename__ = "schedule"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     bus_stop_id: Mapped[int] = mapped_column(ForeignKey("bus_stop.id"))
-    arrival: Mapped[datetime] = mapped_column()
+    arrival: Mapped[time] = mapped_column()
     bus_number: Mapped[int] = mapped_column(ForeignKey("bus_line.id"))
 
     bus_stop: Mapped["BusStop"] = relationship(back_populates="schedules")
@@ -121,17 +121,20 @@ class BusLine(db.Model):
     line_name: Mapped[str] = mapped_column("line_name", String(200))
     driving_sequence: Mapped[str] = mapped_column(
         "driving_sequence", String(200))
+    driving_sequence_2: Mapped[str] = mapped_column(
+        "driving_sequence_2", String(200))
     schedules: Mapped[List["Schedule"]] = relationship(
         back_populates="bus_line")
 
-    def __init__(self, line_name, driving_sequence) -> None:
+    def __init__(self, line_name, driving_sequence, driving_sequence_2) -> None:
         self.line_name = line_name
         self.driving_sequence = driving_sequence
+        self.driving_sequence_2 = driving_sequence_2
 
 
 class BusLineSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'line_name', 'driving_sequence')
+        fields = ('id', 'line_name', 'driving_sequence', 'driving_sequence_2')
 
 # class Schedule(db.Model):
 #     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -162,10 +165,11 @@ bus_stop_schemas = BusStopSchema(many=True)
 schedule_schemas = ScheduleSchema(many=True)
 
 bus_line_schemas = BusLineSchema(many=True)
+bus_line_schema = BusLineSchema()
 
 
 @app.route('/schedule/get', methods=['GET'])
-def get_schedule():
+def get_schedules():
     all_schedules = Schedule.query.all()
     results = schedule_schemas.dump(all_schedules)
     return jsonify(results)
@@ -185,12 +189,52 @@ def get_bus_stops():
     return jsonify(results)
 
 
-@app.route('/busstop/get/<int:id>', methods=['GET'])
-def get_bus_stop(id):
-    schedules = Schedule.query.filter_by(bus_number=id).all()
-    bus_stops = set(schedule.bus_stop for schedule in schedules)
+@app.route('/busstop/direction/get/<int:id>', methods=['GET'])
+def get_directions(id: int):
+    bus_line: BusLine = BusLine.query.get(id)
+    seq1 = bus_line.driving_sequence.split("-")[-1]
+    seq2 = bus_line.driving_sequence_2.split("-")[-1]
+    bus_stop1: BusStop = BusStop.query.get(int(seq1))
+    bus_stop2: BusStop = BusStop.query.get(int(seq2))
+    return jsonify(id, bus_stop1.name, bus_stop2.name)
+
+
+@app.route('/busstop/get/<int:id>/<int:direction>', methods=['GET'])
+def get_bus_stop(id: int, direction: int):
+    bus_line: BusLine = BusLine.query.get(id)
+    if direction == 1:
+        sequence = list(map(int, bus_line.driving_sequence.split("-")))
+    elif direction == 2:
+        sequence = list(map(int, bus_line.driving_sequence_2.split("-")))
+    else:
+        abort(404)
+    bus_stops: List[BusStop] = BusStop.query.filter(
+        BusStop.id.in_(sequence)).all()
+    bus_stops.sort(key=lambda x: sequence.index(x.id))
+
     return bus_stop_schemas.jsonify(bus_stops)
 
+
+@app.route('/schedule/get/<int:id>', methods=['GET'])
+def get_schedule(id: int):
+    schedules: List[Schedule] = Schedule.query.filter_by(bus_stop_id=id).all()
+    arrivals: List[time] = [x.arrival for x in schedules]
+    arrivals.sort(key=lambda x: (x.hour, x.minute))
+    dictArrival = {}
+
+    for x in range(24):
+        dictArrival[str(x)] = [
+            str(times.minute) for times in arrivals if times.hour == x]
+
+    return jsonify(dictArrival)
+
+
+@app.route('/shortestWay/get/<int:bus_stop_id>/<int:bus_stop_id2>', methods=['GET'])
+def get_shortest_Way(bus_stop_id: int, bus_stop_id2: int):
+    bus_stops: List[BusStop] = BusStop.query.all()
+    current_data = datetime.now().strftime("%H-%M-%W")
+    print(current_data)
+    return bus_stop_schemas.jsonify(bus_stops)
 
 # @app.route('/get', methods=['GET'])
 # def get_schedule():

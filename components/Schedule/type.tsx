@@ -1,4 +1,6 @@
 export type schedule = {
   id: number;
-  driving_sequence: string;
+  bus_stop_id: number;
+  arrival: Date;
+  bus_number: number;
 };

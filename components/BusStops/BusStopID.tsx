@@ -2,20 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Text, View, FlatList, StyleSheet } from "react-native";
 import { RootStackParams } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-
 import { busStop } from "./types";
+import BusStopCard from "./BusStopCard";
 type Props = NativeStackScreenProps<RootStackParams, "BusStopID">;
 
 export default function BusStopID({ route }: Props) {
-  const [busStops, setBusStops] = useState<busStop[]>([
-    { id: 1, name: "sdf", xPos: 54.34, yPos: 43.65 },
-  ]);
+  const [busStops, setBusStops] = useState<busStop[]>([]);
 
-  console.log(busStops);
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetch(
-        `http://192.168.1.23:8080/busstop/get/${route.params.id}`
+        `http://192.168.1.23:8080/busstop/get/${route.params.id}/${route.params.direction}`
       );
       const data = await res.json();
       setBusStops(data);
@@ -27,7 +24,7 @@ export default function BusStopID({ route }: Props) {
     <View>
       <FlatList
         data={busStops}
-        renderItem={({ item }) => <Text>{item.name}</Text>}
+        renderItem={({ item }) => <BusStopCard prop={item} />}
       ></FlatList>
     </View>
   );

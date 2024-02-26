@@ -1,24 +1,38 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Dimensions, Image, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { max } from "rxjs";
+
+const screenWidth = Dimensions.get("window").width;
 
 const Footer = () => {
   return (
     <View
-      style={[
-        styles.container,
-        {
-          flexDirection: "row",
-        },
-      ]}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        alignItems: "center",
+        height: "80%",
+      }}
     >
       <View>
-        <a target="_blank" href="https://icons8.com/icon/aoYTy8DccxdA/menu">
-          Menu
-        </a>{" "}
-        icon by{" "}
-        <a target="_blank" href="https://icons8.com">
-          Icons8
-        </a>
+        <Image
+          style={{ resizeMode: "contain" }}
+          source={require("my-app/assets/hamburger_icon.png")}
+        />
+      </View>
+      <View>
+        <Image
+          style={{ resizeMode: "contain" }}
+          source={require("my-app/assets/homeicon.png")}
+        />
+      </View>
+      <View>
+        <Image
+          style={{ resizeMode: "contain" }}
+          source={require("my-app/assets/account_icon.png")}
+        />
       </View>
     </View>
   );

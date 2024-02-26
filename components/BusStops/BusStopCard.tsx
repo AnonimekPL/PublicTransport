@@ -1,11 +1,13 @@
 import React from "react";
-import { busLine } from "./types";
-import { Button, Card } from "react-native-paper";
-import { StyleSheet, Text, View } from "react-native";
-import { StackNavigationProp } from "@react-navigation/stack";
+import { useState, useEffect } from "react";
 import { RootStackParams } from "../../App";
 import { useNavigation } from "@react-navigation/native";
-export default function CardWrapper({ prop }: { prop: busLine }) {
+import { StackNavigationProp } from "@react-navigation/stack";
+import { View, Text, StyleSheet } from "react-native";
+import { Card, Button } from "react-native-paper";
+import { busStop } from "./types";
+
+export default function BusStopCard({ prop }: { prop: busStop }) {
   const navigation = useNavigation<StackNavigationProp<RootStackParams>>();
 
   return (
@@ -13,10 +15,10 @@ export default function CardWrapper({ prop }: { prop: busLine }) {
       <View>
         <Button
           onPress={() =>
-            navigation.navigate("Direction", { bus_line_id: prop.id })
+            navigation.navigate("ScheduleID", { bus_stop_id: prop.id })
           }
         >
-          <Text style={styles.text}>{prop.line_name}</Text>
+          <Text style={styles.text}>{prop.name}</Text>
         </Button>
       </View>
     </Card>
