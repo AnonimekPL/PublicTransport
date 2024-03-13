@@ -232,7 +232,7 @@ def get_schedule(id: int):
 @app.route('/shortestWay/get/<int:bus_stop_id>/<int:bus_stop_id2>', methods=['GET'])
 def get_shortest_Way(bus_stop_id: int, bus_stop_id2: int):
     bus_stops: List[BusStop] = BusStop.query.all()
-    current_data = datetime.now().strftime("%H-%M-%W")
+    current_data = datetime.now().strftime("%H-%M-%")
     print(current_data)
     return bus_stop_schemas.jsonify(bus_stops)
 
