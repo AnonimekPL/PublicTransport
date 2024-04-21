@@ -7,22 +7,29 @@ type params = {
   data: RouteItem[];
   setSelectRoute: React.Dispatch<React.SetStateAction<number>>;
   selectRoute: number;
+  handleMarkerClick: (markerKey: string) => void;
 };
 
 type renderItemProps = {
   item: RouteItem;
   setSelectRoute: React.Dispatch<React.SetStateAction<number>>;
   selectRoute: number;
+  handleMarkerClick: (markerKey: string) => void;
 };
-
-const renderItem = ({ item, setSelectRoute, selectRoute }: renderItemProps) => (
+// handleMarkerClick: (markerKey: string) => void; musze dodac
+const renderItem = ({
+  item,
+  setSelectRoute,
+  selectRoute,
+  handleMarkerClick,
+}: renderItemProps) => (
   <Button
-    onPress={() => setSelectRoute(item.key)}
+    onPress={() => (setSelectRoute(item.key), handleMarkerClick(""))}
     style={{
       display: "flex",
       justifyContent: "space-around",
       shadowOpacity: 0.4,
-      backgroundColor: item.key === selectRoute ? "grey" : "white",
+      backgroundColor: item.key === selectRoute ? "#61DAFB" : "white",
     }}
   >
     <Text>{item.key + 1}</Text>
@@ -33,6 +40,7 @@ export default function ShowAlternativeRoutes({
   data,
   setSelectRoute,
   selectRoute,
+  handleMarkerClick,
 }: params) {
   return (
     <FlatList
@@ -45,7 +53,7 @@ export default function ShowAlternativeRoutes({
       }}
       data={data}
       renderItem={({ item }) =>
-        renderItem({ item, setSelectRoute, selectRoute })
+        renderItem({ item, setSelectRoute, selectRoute, handleMarkerClick })
       }
       keyExtractor={(item) => item.key.toString()}
       horizontal={true}

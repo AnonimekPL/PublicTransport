@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, FlatList, StyleSheet, View } from "react-native";
-import MapView, { LatLng, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 import ShowAlternativeRoutes from "./Map/ShowAlternativeRoutes";
 import axios from "axios";
@@ -26,26 +26,14 @@ import Markers from "./Map/Markers";
 import SearchContainer from "./Map/SearchContainer";
 import Polylines from "./Map/Polylines";
 import { RouteItem } from "./types";
-// import { addArrayToKey } from "./Map/addArrayToKey";
-export default function Map4() {
-  // const pan = useRef(new Animated.ValueXY()).current;
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParams } from "../App";
 
-  // const panResponder = useRef(
-  //   PanResponder.create({
-  //     onMoveShouldSetPanResponder: () => true,
-  //     onPanResponderMove: Animated.event(
-  //       [
-  //         null,
-  //         { dx: pan.x, dy: pan.y }, // Opcje dla metody Animated.event
-  //       ],
-  //       { useNativeDriver: false } // Dodatkowe opcje, tutaj można dostosować
-  //     ),
-  //     onPanResponderRelease: () => {
-  //       pan.extractOffset();
-  //     },
-  //   })
-  // ).current;
+import { busStop } from "./BusStops/types";
+type Props = NativeStackScreenProps<RootStackParams, "Mapa">;
+export default function Map4({ route }: Props) {
 
+  const [busStop, setBusStop] = useState<busStop>();
   const [markers, setMarkers] = useState<markerResult>();
   const [origin, setOrigin] = useState<LatLng | null>(null);
   const [destination, setDestination] = useState<LatLng | null>(null);
@@ -53,7 +41,50 @@ export default function Map4() {
   const [transit_routing_preference, setTransit_routing_preference] =
     useState<string>("");
 
+  type transit_mode_type = {
+    bus: boolean;
+    subway: boolean;
+    train: boolean;
+    tram: boolean;
+  };
+  const [transit_mode, setTransit_mode] = useState<transit_mode_type>({
+    bus: false,
+    subway: false,
+    train: false,
+    tram: false,
+  });
+
   const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (route.params) {
+          const res = await fetch(
+            `http://192.168.1.23:8080//busstop/get/${route.params.id}`
+          );
+          const data = await res.json();
+          setBusStop(data);
+        }
+      } catch (error) {
+        console.error("Błąd podczas pobierania danych:", error);
+      }
+    };
+
+    fetchData();
+  }, [route.params]);
+
+  useEffect(() => {
+    if (busStop) {
+      const position = {
+        latitude: busStop?.xPos || 0,
+        longitude: busStop?.yPos || 0,
+      };
+      moveTo(position);
+      setDestination(position);
+
+    }
+  }, [busStop]);
 
   const moveTo = async (position: LatLng) => {
     const camera = await mapRef.current?.getCamera();
@@ -87,6 +118,7 @@ export default function Map4() {
       setSelectRoute,
       date,
       transit_routing_preference,
+      transit_mode,
     });
   };
 
@@ -100,20 +132,8 @@ export default function Map4() {
     value,
   }));
 
-  const renderItem = ({ item }: { item: RouteItem }) => (
-    <Button
-      onPress={() => setSelectRoute(item.key)}
-      style={{
-        display: "flex",
-        justifyContent: "space-around",
-        shadowOpacity: 0.4,
-        backgroundColor: item.key === selectRoute ? "grey" : "white",
-      }}
-    >
-      <Text>{item.key + 1}</Text>
-    </Button>
-  );
-  console.log(markers);
+
+
   return (
     <View style={styles.container}>
       <MapView
@@ -123,7 +143,44 @@ export default function Map4() {
         provider={PROVIDER_GOOGLE}
       >
         {routes && <Polylines routes={routes} selectRoute={selectRoute} />}
-
+        {origin && (
+          <Marker
+            coordinate={{
+              latitude: origin?.latitude,
+              longitude: origin?.longitude,
+            }}
+            title={`Przystanek`}
+            pinColor="green"
+          />
+        )}
+        {busStop && (
+          <Marker
+            coordinate={{
+              latitude: busStop?.xPos,
+              longitude: busStop?.yPos,
+            }}
+            title={`Przystanek ${busStop.name}`}
+            pinColor="green"
+          />
+        )}
+        {origin && (
+          <Marker
+            coordinate={{
+              latitude: origin.latitude,
+              longitude: origin.longitude,
+            }}
+            pinColor="green"
+          />
+        )}
+        {destination && !busStop && (
+          <Marker
+            coordinate={{
+              latitude: destination.latitude,
+              longitude: destination.longitude,
+            }}
+            pinColor="green"
+          />
+        )}
         {markers && typeof markers[selectRoute] !== "undefined" && (
           <Markers
             markers={markers}
@@ -151,12 +208,16 @@ export default function Map4() {
         date={date}
         transit_routing_preference={transit_routing_preference}
         setTransit_routing_preference={setTransit_routing_preference}
+        transit_mode={transit_mode}
+        setTransit_mode={setTransit_mode}
+        busStop={busStop?.name}
       />
       <>
         <ShowAlternativeRoutes
           data={data}
           setSelectRoute={setSelectRoute}
           selectRoute={selectRoute}
+          handleMarkerClick={handleMarkerClick}
         />
       </>
     </View>

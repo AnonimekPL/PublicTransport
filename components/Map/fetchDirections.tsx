@@ -5,6 +5,12 @@ import { routes_type, markerResult } from "../types";
 import { dane } from "../types";
 import axios from "axios";
 import { addArrayToKey } from "./addArrayToKey";
+type transit_mode_type = {
+  bus: boolean;
+  subway: boolean;
+  train: boolean;
+  tram: boolean;
+};
 type props = {
   origin: LatLng | null;
   destination: LatLng | null;
@@ -14,6 +20,7 @@ type props = {
   setSelectRoute: React.Dispatch<React.SetStateAction<number>>;
   date: Date;
   transit_routing_preference: string;
+  transit_mode: transit_mode_type;
 };
 
 export const fetchDirections = async ({
@@ -24,11 +31,22 @@ export const fetchDirections = async ({
   setSelectRoute,
   date,
   transit_routing_preference,
+  transit_mode,
 }: props) => {
   try {
     setRoutes({});
     setMarkers(undefined);
-    const d = Math.floor(new Date(date).getTime() / 1000);
+    const time_to_number = Math.floor(new Date(date).getTime() / 1000);
+    let transitModeString = "";
+    for (const mode in transit_mode) {
+      if (
+        transit_mode.hasOwnProperty(mode) &&
+        transit_mode[mode as keyof transit_mode_type] === true
+      ) {
+        transitModeString += mode + "|";
+      }
+    }
+    transitModeString = transitModeString.slice(0, -1);
     const response = await axios.get<dane>(
       "https://maps.googleapis.com/maps/api/directions/json",
       {
@@ -39,7 +57,8 @@ export const fetchDirections = async ({
           alternatives: true,
           transit_routing_preference: transit_routing_preference,
           key: GOOGLE_API_KEY,
-          departure_time: d,
+          departure_time: time_to_number,
+          transit_mode: transitModeString,
         },
       }
     );

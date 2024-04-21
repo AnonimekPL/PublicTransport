@@ -13,7 +13,7 @@ export default function CardWrapper({ prop }: { prop: busLine }) {
       <View>
         <Button
           onPress={() =>
-            navigation.navigate("Direction", { bus_line_id: prop.id })
+            navigation.navigate("Kierunek", { bus_line_id: prop.id })
           }
         >
           <Text style={styles.text}>{prop.line_name}</Text>

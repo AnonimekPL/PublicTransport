@@ -4,7 +4,7 @@ import { RootStackParams } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { busStop } from "./types";
 import BusStopCard from "./BusStopCard";
-type Props = NativeStackScreenProps<RootStackParams, "BusStopID">;
+type Props = NativeStackScreenProps<RootStackParams, "Przystanki">;
 
 export default function BusStopID({ route }: Props) {
   const [busStops, setBusStops] = useState<busStop[]>([]);
@@ -21,7 +21,7 @@ export default function BusStopID({ route }: Props) {
   }, [route]);
 
   return (
-    <View>
+    <View style={styles.container}>
       <FlatList
         data={busStops}
         renderItem={({ item }) => <BusStopCard prop={item} />}

@@ -1,5 +1,11 @@
 import React from "react";
-import { Dimensions, Image, StyleSheet, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Button, Text } from "react-native-paper";
 import { max } from "rxjs";
 import { useNavigation } from "@react-navigation/native";
@@ -22,20 +28,14 @@ const Footer = () => {
       }}
     >
       <View>
-        <Button onPress={() => navigation.navigate("BusLine")}>
-          <Image
-            // style={{ resizeMode: "contain" }}
-            source={require("my-app/assets/hamburger_icon.png")}
-          />
-        </Button>
+        <TouchableOpacity onPress={() => navigation.navigate("Trasy")}>
+          <Image source={require("my-app/assets/hamburger_icon.png")} />
+        </TouchableOpacity>
       </View>
       <View>
-        <Button onPress={() => navigation.navigate("Map4")}>
-          <Image
-            // style={{ resizeMode: "contain" }}
-            source={require("my-app/assets/homeicon.png")}
-          />
-        </Button>
+        <TouchableOpacity onPress={() => navigation.navigate("Mapa")}>
+          <Image source={require("my-app/assets/homeicon.png")} />
+        </TouchableOpacity>
       </View>
     </View>
   );

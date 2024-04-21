@@ -67,9 +67,9 @@ export type markerResult = {
 };
 
 export type InputAutocompleteProps = {
-  label: string;
   placeholder: string;
   onPlaceSelected: (details: GooglePlaceDetail | null) => void;
+  busStop: string | undefined;
 };
 
 export type routes_type = {

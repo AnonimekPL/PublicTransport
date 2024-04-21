@@ -6,7 +6,7 @@ import { Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 
-type Props = NativeStackScreenProps<RootStackParams, "Direction">;
+type Props = NativeStackScreenProps<RootStackParams, "Kierunek">;
 
 export default function Direction({ route }: Props) {
   const navigation = useNavigation<StackNavigationProp<RootStackParams>>();
@@ -28,7 +28,7 @@ export default function Direction({ route }: Props) {
   }, [route]);
 
   return (
-    <View style={{ height: "100%" }}>
+    <View style={styles.container}>
       <Button
         style={{
           flex: 1,
@@ -36,19 +36,22 @@ export default function Direction({ route }: Props) {
           borderWidth: 3, // Grubość obramowania
           borderColor: "black", // Kolor obramowania
           borderRadius: 10,
+          minHeight: "40%",
+          justifyContent: "center",
         }}
         onPress={() =>
-          navigation.navigate("BusStopID", { id: direction[0], direction: 1 })
+          navigation.navigate("Przystanki", { id: direction[0], direction: 1 })
         }
       >
-        <View
+        <Text
           style={{
-            minHeight: "90%",
+            fontSize: 20,
             justifyContent: "center",
+            color: "black",
           }}
         >
-          <Text style={{ fontSize: 20 }}>{direction?.[1]}</Text>
-        </View>
+          {direction?.[1]}
+        </Text>
       </Button>
       <Button
         style={{
@@ -57,19 +60,23 @@ export default function Direction({ route }: Props) {
           borderWidth: 3, // Grubość obramowania
           borderColor: "black", // Kolor obramowania
           borderRadius: 10,
+          justifyContent: "center",
+          minHeight: "40%",
         }}
         onPress={() =>
-          navigation.navigate("BusStopID", { id: direction[0], direction: 2 })
+          navigation.navigate("Przystanki", { id: direction[0], direction: 2 })
         }
       >
-        <View
+        <Text
           style={{
-            minHeight: "90%",
+            fontSize: 20,
+
             justifyContent: "center",
+            color: "black",
           }}
         >
-          <Text style={{ fontSize: 20 }}>{direction?.[2]}</Text>
-        </View>
+          {direction?.[2]}
+        </Text>
       </Button>
     </View>
   );

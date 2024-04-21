@@ -2,16 +2,24 @@ import { StyleSheet, Text } from "react-native";
 import { InputAutocompleteProps } from "../types";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_API_KEY } from "../../environments";
+import { useEffect, useRef } from "react";
 
 export default function InputAutocomplete({
-  label,
   placeholder,
   onPlaceSelected,
+  busStop,
 }: InputAutocompleteProps) {
+  const addressInputRef = useRef<any>(null);
+  useEffect(() => {
+    if (typeof busStop === "string") {
+      addressInputRef.current.setAddressText(busStop);
+    }
+  }, [busStop]);
+
   return (
     <>
-      <Text>{label}</Text>
       <GooglePlacesAutocomplete
+        ref={addressInputRef}
         styles={{ textInput: styles.input }}
         placeholder={placeholder || ""}
         fetchDetails

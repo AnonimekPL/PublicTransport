@@ -1,103 +1,77 @@
 from flask import Flask, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-
-from sqlalchemy import ForeignKey, Column, String, Integer, Time, Float, Text
+from marshmallow import fields
+from sqlalchemy import ForeignKey, Column, String, Integer, Time, Float, Text, VARCHAR, Enum as sqlEnum
 from sqlalchemy.orm import DeclarativeBase
 
 from datetime import time, date, datetime
 from typing import Any, List
 
+from enum import Enum
 
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
+
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:''@localhost/flask'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
-# Klasa reprezentująca przystanki autobusowe
 
-
-# class BusStop(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(255), nullable=False)  # Nazwa przystanku
-#     xPos = db.Column(db.Float, nullable=False)  # Współrzędna x
-#     yPos = db.Column(db.Float, nullable=False)  # Współrzędna y
-
-#     def __init__(self, name, xPos, yPos):
-#         self.name = name
-#         self.xPos = xPos
-#         self.yPos = yPos
-
-# Klasa reprezentująca linie autobusowe
-
-
-# class BusLine(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     number = db.Column(db.String(50), nullable=False)  # Numer linii
-#     stops = db.relationship(
-#         'BusStop', secondary='bus_stop_lines', back_populates='lines')
-
-#     def __init__(self, number):
-#         self.number = number
-
-
-# # Tabela łącznikowa między przystankami a liniami autobusowymi
-# bus_stop_lines = db.Table('bus_stop_lines',
-#                           db.Column('bus_stop_id', db.Integer, db.ForeignKey(
-#                               'bus_stop.id'), primary_key=True),
-#                           db.Column('bus_line_id', db.Integer, db.ForeignKey(
-#                               'bus_line.id'), primary_key=True)
-#                           )
 
 class Base(DeclarativeBase):
     pass
 
 
+class WeekdayEnum(Enum):
+    WORKING_DAYS = 1
+    WEEKENDS_AND_BREAK = 2
+
+
 class Schedule(db.Model):
     __tablename__ = "schedule"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    bus_stop_id: Mapped[int] = mapped_column(ForeignKey("bus_stop.id"))
-    arrival: Mapped[time] = mapped_column()
-    bus_number: Mapped[int] = mapped_column(ForeignKey("bus_line.id"))
-
+    bus_stop_id: Mapped[int] = mapped_column(
+        "bus_stop_id", ForeignKey("bus_stop.id"))
+    arrival: Mapped[time] = mapped_column("arrival", Time)
+    bus_line_id: Mapped[int] = mapped_column(
+        "bus_line_id", ForeignKey("bus_line.id"))
+    weekday: Mapped[WeekdayEnum] = mapped_column(
+        'weekday', sqlEnum(WeekdayEnum))
     bus_stop: Mapped["BusStop"] = relationship(back_populates="schedules")
     bus_line: Mapped["BusLine"] = relationship(back_populates="schedules")
 
-    def __init__(self, id, bus_stop_id, arrival, bus_number):
+    def __init__(self, id, bus_stop_id, arrival, bus_line_id, weekday):
         self.id = id
         self.bus_stop_id = bus_stop_id
         self.arrival = arrival
-        self.bus_number = bus_number
-
-# class Schedule(db.Model):
-#     __tablename__ = "schedule"
-#     id = Column("id", Integer, primary_key=True)
-#     bus_stop_id = Column("bus_stop_id", Integer)
-#     arrival = Column("arrival", Time)
-#     bus_number = Column("bus_number", Integer)
-#     # children: Mapped[List["Child"]] = relationship()
-
-#     def __init__(self, id, bus_stop_id, arrival, bus_number):
-#         self.id = id
-#         self.bus_stop_id = bus_stop_id
-#         self.arrival = arrival
-#         self.bus_number = bus_number
+        self.bus_line_id = bus_line_id
+        self.weekday = weekday
 
 
 class ScheduleSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'bus_stop_id', 'arrival', 'bus_number')
+        fields = ('id', 'bus_stop_id', 'arrival', 'bus_line_id', 'weekday')
+
+    weekday = fields.Method("get_weekday_enum_value")
+
+    def get_weekday_enum_value(self, obj):
+        return obj.weekday.value
+
+
+schedule_schema = ScheduleSchema(many=False)
+schedules_schema = ScheduleSchema(many=True)
 
 
 class BusStop(db.Model):
     __tablename__ = "bus_stop"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column("name", String(255), nullable=False)
+    name: Mapped[str] = mapped_column("name", VARCHAR(200), nullable=False)
     xPos: Mapped[float] = mapped_column("xPos", Float, nullable=False)
     yPos: Mapped[float] = mapped_column("yPos", Float, nullable=False)
     schedules: Mapped[List["Schedule"]] = relationship(
@@ -115,83 +89,100 @@ class BusStopSchema(ma.Schema):
         fields = ('id', 'name', 'xPos', 'yPos')
 
 
+bus_stop_schema = BusStopSchema()
+bus_stops_schema = BusStopSchema(many=True)
+
+
+class TypeEnum(Enum):
+    BUS = 1
+    TRAM = 2
+    SUBWAY = 3
+
+
 class BusLine(db.Model):
     __tablename__ = "bus_line"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    line_name: Mapped[str] = mapped_column("line_name", String(200))
+    line_name: Mapped[str] = mapped_column(
+        "line_name", VARCHAR(200), nullable=False)
     driving_sequence: Mapped[str] = mapped_column(
-        "driving_sequence", String(200))
+        "driving_sequence", VARCHAR(200))
     driving_sequence_2: Mapped[str] = mapped_column(
-        "driving_sequence_2", String(200))
+        "driving_sequence_2", VARCHAR(200))
     schedules: Mapped[List["Schedule"]] = relationship(
         back_populates="bus_line")
+    type: Mapped[TypeEnum] = mapped_column(
+        'type', sqlEnum(TypeEnum), nullable=False)
 
-    def __init__(self, line_name, driving_sequence, driving_sequence_2) -> None:
+    def __init__(self, line_name, driving_sequence, driving_sequence_2, type) -> None:
         self.line_name = line_name
         self.driving_sequence = driving_sequence
         self.driving_sequence_2 = driving_sequence_2
+        self.type = type
 
 
 class BusLineSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'line_name', 'driving_sequence', 'driving_sequence_2')
+        fields = ('id', 'line_name', 'driving_sequence',
+                  'driving_sequence_2', 'type')
 
-# class Schedule(db.Model):
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     schedule_id = db.Column(
-#         db.Integer, db.ForeignKey('bus_stop.id'), nullable=False)
-#     arrival = db.Column(db.Time, nullable=False)
-#     bus_line_number = db.Column(db.String(10), nullable=False)
+    type = fields.Method("get_type_enum_value")
 
-#     przystanek = db.relationship('BusStop', backref='rozklad', lazy=True)
-
-#     def __init__(self, schedule_id, arrival, bus_line_number) -> None:
-#         self.schedule_id = schedule_id
-#         self.arrival = arrival
-#         self.bus_line_number = bus_line_number
+    def get_type_enum_value(self, obj):
+        return obj.type.value
 
 
-# class ScheduleSchema(ma.Schema):
-#     class Meta:
-#         fields = ('id', 'schedule_id', 'arrival', 'bus_line_number')
-
-
-bus_stop_schema = BusStopSchema()
-bus_stop_schemas = BusStopSchema(many=True)
-
-# schedule_schema = ScheduleSchema()
-# schedules_schema = ScheduleSchema(many=True)
-
-schedule_schemas = ScheduleSchema(many=True)
-
-bus_line_schemas = BusLineSchema(many=True)
+bus_lines_schema = BusLineSchema(many=True)
 bus_line_schema = BusLineSchema()
 
 
 @app.route('/schedule/get', methods=['GET'])
 def get_schedules():
     all_schedules = Schedule.query.all()
-    results = schedule_schemas.dump(all_schedules)
+    results = schedules_schema.dump(all_schedules)
     return jsonify(results)
 
 
 @app.route('/busline/get', methods=['GET'])
 def get_busline():
     all_schedules = BusLine.query.all()
-    results = bus_line_schemas.dump(all_schedules)
+    results = bus_lines_schema.dump(all_schedules)
     return jsonify(results)
+
+
+@app.route('/busline/get/<string:type>', methods=['GET'])
+def get_busline_by_type(type: str):
+    if type.upper() in [member.name for member in TypeEnum.__members__.values()]:
+        filtered_bus_lines = BusLine.query.filter_by(
+            type=TypeEnum[type.upper()]).all()
+
+        results = bus_lines_schema.dump(filtered_bus_lines)
+        return jsonify(results)
+    else:
+        abort(400, 'Invalid vehicle type')
 
 
 @app.route('/busstop/get', methods=['GET'])
 def get_bus_stops():
     all_bus_stops = BusStop.query.all()
-    results = bus_stop_schemas.dump(all_bus_stops)
+    results = bus_stops_schema.dump(all_bus_stops)
     return jsonify(results)
+
+
+@app.route('/busstop/get/<int:id>', methods=['GET'])
+def get_bus_stop_by_id(id: int):
+    bus_stop: BusStop = BusStop.query.get(id)
+    if not bus_stop:
+        abort(404)
+
+    result = bus_stop_schema.dump(bus_stop)
+    return jsonify(result)
 
 
 @app.route('/busstop/direction/get/<int:id>', methods=['GET'])
 def get_directions(id: int):
     bus_line: BusLine = BusLine.query.get(id)
+    if not bus_line:
+        abort(404)
     seq1 = bus_line.driving_sequence.split("-")[-1]
     seq2 = bus_line.driving_sequence_2.split("-")[-1]
     bus_stop1: BusStop = BusStop.query.get(int(seq1))
@@ -202,6 +193,8 @@ def get_directions(id: int):
 @app.route('/busstop/get/<int:id>/<int:direction>', methods=['GET'])
 def get_bus_stop(id: int, direction: int):
     bus_line: BusLine = BusLine.query.get(id)
+    if not bus_line:
+        abort(404)
     if direction == 1:
         sequence = list(map(int, bus_line.driving_sequence.split("-")))
     elif direction == 2:
@@ -212,21 +205,28 @@ def get_bus_stop(id: int, direction: int):
         BusStop.id.in_(sequence)).all()
     bus_stops.sort(key=lambda x: sequence.index(x.id))
 
-    return bus_stop_schemas.jsonify(bus_stops)
+    return bus_stops_schema.jsonify(bus_stops)
 
 
-@app.route('/schedule/get/<int:id>', methods=['GET'])
-def get_schedule(id: int):
-    schedules: List[Schedule] = Schedule.query.filter_by(bus_stop_id=id).all()
-    arrivals: List[time] = [x.arrival for x in schedules]
-    arrivals.sort(key=lambda x: (x.hour, x.minute))
-    dictArrival = {}
+@app.route('/schedule/get/<int:id>/<string:weekday>', methods=['GET'])
+def get_schedule(id: int, weekday: str):
+    if not Schedule.query.filter_by(bus_stop_id=id).first():
+        abort(404)
+    if weekday in [member.name for member in WeekdayEnum.__members__.values()]:
+        schedules: List[Schedule] = Schedule.query.filter_by(
+            bus_stop_id=id).filter_by(
+                weekday=WeekdayEnum[weekday]).all()
 
-    for x in range(24):
-        dictArrival[str(x)] = [
-            str(times.minute) for times in arrivals if times.hour == x]
+        arrivals: List[time] = [x.arrival for x in schedules]
+        arrivals.sort(key=lambda x: (x.hour, x.minute))
+        dictArrival = {}
 
-    return jsonify(dictArrival)
+        for x in range(24):
+            dictArrival[str(x)] = [
+                str(times.minute) for times in arrivals if times.hour == x]
+
+        return jsonify(dictArrival)
+    abort(400, 'Incorect data')
 
 
 @app.route('/shortestWay/get/<int:bus_stop_id>/<int:bus_stop_id2>', methods=['GET'])
@@ -234,35 +234,7 @@ def get_shortest_Way(bus_stop_id: int, bus_stop_id2: int):
     bus_stops: List[BusStop] = BusStop.query.all()
     current_data = datetime.now().strftime("%H-%M-%")
     print(current_data)
-    return bus_stop_schemas.jsonify(bus_stops)
-
-# @app.route('/get', methods=['GET'])
-# def get_schedule():
-#     all_schedules = Schedule.query.all()
-#     results = schedules_schema.dump(all_schedules)
-#     return jsonify(results)
-
-
-# @app.route('/add', methods=['POST'])
-# def add_schedule():
-#     schedule_id = request.json['schedule_id']
-#     arrival = request.json['arrival']
-#     bus_line_number = request.json['bus_line_number']
-
-#     schedules = Schedule(schedule_id, arrival, bus_line_number)
-#     db.session.add(schedules)
-#     db.session.commit()
-#     return schedule_schema.jsonify(schedules)
-# @app.route('/busstop/add', methods=['POST'])
-# def add_bus_stop():
-#     name = request.json['name']
-#     xPos = request.json['xPos']
-#     yPos = request.json['yPos']
-
-#     bus_stops = BusStop(name, xPos, yPos)
-#     db.session.add(bus_stops)
-#     db.session.commit()
-#     return schedule_schema.jsonify(bus_stops)
+    return bus_stops_schema.jsonify(bus_stops)
 
 
 with app.app_context():

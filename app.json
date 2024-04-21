@@ -13,10 +13,7 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true,
-      "config": {
-        "googleMapsApiKey": "AIzaSyAvonVNcod9u70LsmQjDH6RRnB8f8LeMj8"
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +22,19 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "webpack"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b0ad798c-3abb-43aa-8125-83a77c0cf77e"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b0ad798c-3abb-43aa-8125-83a77c0cf77e"
     }
   }
 }

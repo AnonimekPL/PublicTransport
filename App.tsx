@@ -10,30 +10,25 @@ import BusLine from "./components/BusLine/BusLine";
 import BusStops from "./components/BusStops/BusStops";
 import ScheduleID from "./components/Schedule/ScheduleID";
 import Footer from "./components/Footer/Footer";
-import Schedule from "./components/Schedule/Schedule";
+
 import Direction from "./components/BusStops/Direction";
-import Map from "./components/Map";
-import Map3 from "./components/Map3";
+
 import Map4 from "./components/Map4";
 export type RootStackParams = {
-  Direction: {
+  Kierunek: {
     bus_line_id: number;
   };
-  BusLine: any;
-  Schedule: any;
-  BusStops: any;
-  // Home: any;
-  Details: any;
-  BusStopID: {
+  Trasy: {};
+  Przystanki: {
     id: number;
     direction: number;
   };
-  ScheduleID: {
+  Rozkład: {
     bus_stop_id: number;
   };
-  Map: any;
-  Map3: any;
-  Map4: any;
+  Mapa: {
+    id: number;
+  };
 };
 const RootStack = createNativeStackNavigator<RootStackParams>();
 
@@ -41,28 +36,31 @@ const YourComponent = () => {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer>
-        <View style={{ height: "90%" }}>
+        <View style={styles.NavigationContainer}>
           <RootStack.Navigator>
-            {/* <RootStack.Screen name="Schedule" component={Schedule} /> */}
-            <RootStack.Screen name="Map4" component={Map4} />
-            <RootStack.Screen name="Map3" component={Map3} />
-            <RootStack.Screen name="Map" component={Map} />
-            <RootStack.Screen name="BusLine" component={BusLine} />
-            <RootStack.Screen name="Direction" component={Direction} />
-            <RootStack.Screen name="BusStops" component={BusStops} />
-            <RootStack.Screen name="BusStopID" component={BusStopID} />
-            <RootStack.Screen name="ScheduleID" component={ScheduleID} />
+            <RootStack.Screen name="Mapa" component={Map4} />
+            <RootStack.Screen name="Trasy" component={BusLine} />
+            <RootStack.Screen name="Kierunek" component={Direction} />
+            <RootStack.Screen name="Przystanki" component={BusStopID} />
+            <RootStack.Screen name="Rozkład" component={ScheduleID} />
           </RootStack.Navigator>
         </View>
-        <View style={{ height: "10%" }}>
+        <View style={styles.Footer}>
           <Footer />
         </View>
       </NavigationContainer>
     </View>
   );
 };
-
+// {/* <RootStack.Screen name="BusStops" component={BusStops} /> */}
+// {/* <RootStack.Screen name="Schedule" component={Schedule} /> */}
 const styles = StyleSheet.create({
+  NavigationContainer: {
+    height: "90%",
+  },
+  Footer: {
+    height: "10%",
+  },
   bottomContainer: {
     backgroundColor: "lightgray",
     padding: 10,

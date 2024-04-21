@@ -1,12 +1,27 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
+  Platform,
+} from "react-native";
 import InputAutocomplete from "./InputAutocomplete";
 import Constants from "expo-constants";
 import { GooglePlaceDetail } from "react-native-google-places-autocomplete";
 import { useState } from "react";
-import { RadioButton } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { RadioButton, Checkbox } from "react-native-paper";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Button } from "react-native";
+type transit_mode_type = {
+  bus: boolean;
+  subway: boolean;
+  train: boolean;
+  tram: boolean;
+};
 type prop = {
   onPlaceSelected: (
     details: GooglePlaceDetail | null,
@@ -17,120 +32,281 @@ type prop = {
   date: Date;
   transit_routing_preference: string;
   setTransit_routing_preference: React.Dispatch<React.SetStateAction<string>>;
+  transit_mode: transit_mode_type;
+  setTransit_mode: React.Dispatch<React.SetStateAction<transit_mode_type>>;
+  busStop: string | undefined;
 };
 export default function SearchContainer(params: prop) {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   // const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [time, setTime] = useState<Date>();
+  const [dateTime, setDateTime] = useState<Date>();
 
   const showDateTimePicker = () => {
-    setShowPicker(true);
+    setShowPicker((prev) => !prev);
   };
 
   const hideDateTimePicker = () => {
     setShowPicker(false);
   };
 
-  const handleDateChange = (event: Event, selectedDate?: Date) => {
+  const handleDateChange = (
+    _event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
     const currentDate = selectedDate || params.date;
     params.setDate(currentDate);
   };
-  const handleConfirmDate = () => {
-    hideDateTimePicker(); // Ukryj DateTimePicker po naciśnięciu przycisku "Confirm"
-    // Tutaj możesz wykonać dodatkowe operacje po potwierdzeniu daty
+  const handleTimeChange = (
+    _event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    const currentDate = selectedDate || params.date;
+    console.log(selectedDate);
+    // console.log(currentDate);
+    setTime(currentDate);
+    hideDateTimePicker();
+    setShowDatePicker(true);
   };
+  const handleDateTimeChange = (
+    _event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    setShowDatePicker(false);
+    let currentDate = selectedDate || params.date;
+    if (time) {
+      console.log(time);
+      time.setHours(currentDate?.getHours());
+      time.setMinutes(currentDate?.getMinutes());
+    }
+    params.setDate(currentDate);
+  };
+
   return (
     <View style={styles.searchContainer}>
-      <InputAutocomplete
-        label="Origin"
-        placeholder=""
-        onPlaceSelected={(details) => {
-          params.onPlaceSelected(details, "origin");
-        }}
-      />
-      <InputAutocomplete
-        label="Destination"
-        placeholder=""
-        onPlaceSelected={(details) => {
-          params.onPlaceSelected(details, "destination");
-        }}
-      />
+      <View style={{ flexDirection: "row" }}>
+        <View style={{ width: "80%", padding: 15 }}>
+          <InputAutocomplete
+            placeholder="Wpisz punkt początkowy"
+            onPlaceSelected={(details) => {
+              params.onPlaceSelected(details, "origin");
+            }}
+            busStop={undefined}
+          />
+          <InputAutocomplete
+            placeholder="Wpisz punkt końcowy"
+            onPlaceSelected={(details) => {
+              params.onPlaceSelected(details, "destination");
+            }}
+            busStop={params.busStop}
+          />
+        </View>
 
-      <TouchableOpacity onPress={params.fetchDirections}>
-        <Text>Trace Route</Text>
+        <TouchableOpacity
+          style={{
+            alignSelf: "center",
+            transform: [{ scale: 0.8 }],
+          }}
+          onPress={params.fetchDirections}
+        >
+          <Image source={require("my-app/assets/route_icon.png")} />
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity
+        style={{
+          bottom: -4,
+          position: "absolute",
+          alignSelf: "center",
+
+          transform: [{ scale: 0.75 }],
+        }}
+        onPress={() => setShowFilters((prev) => !prev)}
+      >
+        {showFilters ? (
+          <Image source={require("my-app/assets/up_icon.png")} />
+        ) : (
+          <Image source={require("my-app/assets/down_icon.png")} />
+        )}
       </TouchableOpacity>
-      <Button title="filtry" onPress={() => setShowFilters((prev) => !prev)} />
 
       {showFilters && (
         <View>
-          <View>
-            <Button title="Open Date Picker" onPress={showDateTimePicker} />
-            {showPicker && (
-              <>
+          {Platform.OS === "ios" && (
+            <View>
+              <TouchableOpacity onPress={showDateTimePicker}>
+                <Text
+                  style={{
+                    color: "#1957E0",
+                    fontSize: 20,
+                    textAlign: "center",
+                    paddingBottom: 10,
+                  }}
+                >
+                  Select Time
+                </Text>
+              </TouchableOpacity>
+
+              {showPicker && (
+                <>
+                  <DateTimePicker
+                    mode="datetime"
+                    display="spinner"
+                    value={params.date}
+                    onChange={handleDateChange}
+                    onTouchCancel={hideDateTimePicker}
+                  />
+                  <Button title="Confirm" onPress={hideDateTimePicker} />
+                </>
+              )}
+            </View>
+          )}
+          {Platform.OS === "android" && (
+            <View>
+              <TouchableOpacity onPress={showDateTimePicker}>
+                <Text
+                  style={{
+                    color: "#1957E0",
+                    fontSize: 20,
+                    textAlign: "center",
+                    paddingBottom: 10,
+                  }}
+                >
+                  Select Time
+                </Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
                 <DateTimePicker
-                  mode="datetime"
+                  mode="time"
+                  display="clock"
+                  value={params.date}
+                  onChange={handleDateTimeChange}
+                />
+              )}
+              {showPicker && (
+                <DateTimePicker
+                  mode="date"
                   display="spinner"
                   value={params.date}
-                  onChange={handleDateChange}
-                  onTouchCancel={handleConfirmDate}
+                  onChange={handleTimeChange}
                 />
-                <Button title="Confirm" onPress={handleConfirmDate} />
-              </>
-            )}
-          </View>
-          <Text>Transit Routing Preference:</Text>
-          <View style={styles.radioButtonContainer}>
-            <View style={styles.radioButtonText}>
-              <Text>brak</Text>
+              )}
             </View>
+          )}
+
+          <Text style={{ color: "#1957E0", textAlign: "center", margin: 10 }}>
+            Transit Routing Preference
+          </Text>
+          <View>
+            <View style={styles.radioButtonContainer}>
+              <View style={styles.radioButtonText}>
+                <Text>null</Text>
+              </View>
+              <View style={styles.radioButton}>
+                <RadioButton
+                  value="without"
+                  status={
+                    params.transit_routing_preference === ""
+                      ? "checked"
+                      : "unchecked"
+                  }
+                  onPress={() => params.setTransit_routing_preference("")}
+                  color="green"
+                />
+              </View>
+            </View>
+            <View style={styles.radioButtonContainer}>
+              <View style={styles.radioButtonText}>
+                <Text>less_walking</Text>
+              </View>
+              <View style={styles.radioButton}>
+                <RadioButton
+                  value="less_walking"
+                  status={
+                    params.transit_routing_preference === "less_walking"
+                      ? "checked"
+                      : "unchecked"
+                  }
+                  onPress={() =>
+                    params.setTransit_routing_preference("less_walking")
+                  }
+                  color="green"
+                />
+              </View>
+            </View>
+            <View style={styles.radioButtonContainer}>
+              <View style={styles.radioButtonText}>
+                <Text>fewer_transfers</Text>
+              </View>
+              <View style={styles.radioButton}>
+                <RadioButton
+                  value="fewer_transfers"
+                  status={
+                    params.transit_routing_preference === "fewer_transfers"
+                      ? "checked"
+                      : "unchecked"
+                  }
+                  onPress={() =>
+                    params.setTransit_routing_preference("fewer_transfers")
+                  }
+                  color="green"
+                />
+              </View>
+            </View>
+          </View>
+          <Text style={{ color: "#1957E0", textAlign: "center", margin: 10 }}>
+            Prefer transit mode
+          </Text>
+          <View style={styles.checkButtonContainer}>
+            <Text>bus</Text>
             <View style={styles.radioButton}>
-              <RadioButton
-                value="without"
-                status={
-                  params.transit_routing_preference === ""
-                    ? "checked"
-                    : "unchecked"
-                }
-                onPress={() => params.setTransit_routing_preference("")}
-                color="green"
+              <Checkbox
+                status={params.transit_mode.bus ? "checked" : "unchecked"}
+                onPress={() => {
+                  params.setTransit_mode((prev) => ({
+                    ...prev,
+                    bus: !prev.bus,
+                  }));
+                }}
               />
             </View>
-          </View>
-          <View style={styles.radioButtonContainer}>
-            <View style={styles.radioButtonText}>
-              <Text>mniej chodzenia</Text>
-            </View>
+            <Text>subway</Text>
             <View style={styles.radioButton}>
-              <RadioButton
-                value="less_walking"
-                status={
-                  params.transit_routing_preference === "less_walking"
-                    ? "checked"
-                    : "unchecked"
-                }
-                onPress={() =>
-                  params.setTransit_routing_preference("less_walking")
-                }
-                color="green"
+              <Checkbox
+                status={params.transit_mode.subway ? "checked" : "unchecked"}
+                onPress={() => {
+                  params.setTransit_mode((prev) => ({
+                    ...prev,
+                    subway: !prev.subway,
+                  }));
+                }}
               />
             </View>
-          </View>
-          <View style={styles.radioButtonContainer}>
-            <View style={styles.radioButtonText}>
-              <Text>mniej przesiadek</Text>
-            </View>
+            <Text>train</Text>
             <View style={styles.radioButton}>
-              <RadioButton
-                value="fewer_transfers"
-                status={
-                  params.transit_routing_preference === "fewer_transfers"
-                    ? "checked"
-                    : "unchecked"
-                }
-                onPress={() =>
-                  params.setTransit_routing_preference("fewer_transfers")
-                }
-                color="green"
+              <Checkbox
+                status={params.transit_mode.train ? "checked" : "unchecked"}
+                onPress={() => {
+                  params.setTransit_mode((prev) => ({
+                    ...prev,
+                    train: !prev.train,
+                  }));
+                }}
+              />
+            </View>
+
+            <Text>tram</Text>
+            <View style={styles.radioButton}>
+              <Checkbox
+                status={params.transit_mode.tram ? "checked" : "unchecked"}
+                onPress={() => {
+                  params.setTransit_mode((prev) => ({
+                    ...prev,
+                    tram: !prev.tram,
+                  }));
+                }}
               />
             </View>
           </View>
@@ -170,10 +346,18 @@ const styles = StyleSheet.create({
   radioButtonContainer: {
     flexDirection: "row",
     alignItems: "center",
+    // marginBottom: 15,
+  },
+  checkButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 25,
+    justifyContent: "space-around",
   },
   radioButtonText: {
     flex: 1,
     flexDirection: "column",
+    marginLeft: 5,
   },
   radioButtonGroup: {
     flexDirection: "row",
